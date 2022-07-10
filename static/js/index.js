@@ -38,46 +38,58 @@ class Modals {
             "headOptionContact",
             "footOptionPrivacy",
             "footOptionTerms",
-            "footOptionAbout"
         ]
 
         this.options.forEach(option => {
             // opening modal with generic message
             $(`#${option}`).click(() => {
                 console.log(option);
-                this.enteringModal(`${option}Modal`, "Testing", "This is a generic message");
+                this.enteringModal(`${option}Modal`, "Still in development", "Sorry, but you'll have to wait for the next update.");
 
                 // closing modal
-                $(`.modalBackground`).click(() => {
-                    this.exitingModal(`.modalContainer`);
+                $(`.modal-close`).click(() => {
+                    this.exitingModal(`.modal-background`);
                 });
+            });
+        });
+
+        $('#footOptionAbout').click(() => {
+            this.enteringModal(
+                `footOptionAboutModal`,
+                "Website in development",
+                "By: <br> <a class='icon icon-github' href='https://github.com/grigio888'>Vinicius Grigio</a><a class='icon icon-github' href='https://github.com/phzsantos'>Paulo Henrique</a>");
+
+            // closing modal
+            $(`.modal-close`).click(() => {
+                this.exitingModal(`.modal-background`);
             });
         });
     }
 
     enteringModal(id, title, content) {
-        let modal = $(`
-        <div id="modalContainer">
-            <div class="modalBackground"></div>
-            <div class="modal" id="${id}">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>${title}</h2>
-                        <span class="close">&times;</span>
-                    </div>
-                    <div class="modal-body">
-                        ${content}
-                    </div>
-                </div>
-            </div>
-        </div>
-        `);
+        $('<div>').addClass('modal-background').appendTo('body');
+        $('<div>').addClass('modal').attr('id', id).appendTo('.modal-background');
+        $('<div>').addClass('modal-content').appendTo('.modal');
+        $('<span></span>').addClass('icon').addClass('modal-close').appendTo('.modal');
 
-        $('body').append(modal);
+        $('<div>').addClass('modal-header').appendTo('.modal-content');
+        $(`<h2>${title}</h2>`).appendTo('.modal-header');
+
+        $('<div>').addClass('modal-body').appendTo('.modal-content');
+        $(`<p>${content}</p>`).appendTo('.modal-body');
+
+        $('.modal-background').css({'opacity': 0});
+        $('.modal-background').animate({
+            opacity: 1
+        }, 250);
     }
 
-    exitingModal(id) {
-        $(`#${id}`).remove();
+    exitingModal(tag) {
+        $(tag).animate({
+            opacity: 0
+        }, 250, () => {
+            $(`${tag}`).remove();
+        });
     }
 }
 

@@ -1,7 +1,8 @@
 @use '../../patterns/_colors.scss';
 @use '../../patterns/_displays.scss';
 
-.modal {
+   
+.modal-background {
     position: fixed;
     top: 0;
     left: 0;
@@ -9,30 +10,64 @@
     width: 100%;
     height: 100%;
 
-    background: rgba(0, 0, 0, 0.0);
+    background: rgba(0, 0, 0, 0);
 
     backdrop-filter: blur(10px);
 
-    text-align: center;
+    z-index: 9900;
 
-    z-index: 9999;
-
-    .modal-content {
-        position: absolute;
+    .modal {    
+        position: fixed;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
+        
+        text-align: center;
 
-        @include displays.flex(column, center, space-between);
+        .modal-close {
+            position: absolute;
+            top: 0.75em;
+            right: 0.75em;
+            font-size: 1.5em;
+            cursor: pointer;
 
-        width: 30em;
-        height: 20em;
+            &:before {
+                content: "\f00d";
+                font-weight: 700;
+            }
+        }
+        
+        .modal-content {
+            @include displays.flex(column, center, flex-start);
+    
+            width: 30em;
+            height: 20em;
+    
+            padding: 2em;
+    
+            background-color: white;
+    
+            border: 2px solid darken(map-get(colors.$colorsTheme, 'themeColor'), 35%);
+            border-radius: 0.25em;
 
-        padding: 2em;
+            h2 {
+                margin-bottom: 1em;
+            }
+        }
+    }
+}
 
-        background-color: white;
-
-        border: 2px solid darken(map-get(colors.$colorsTheme, 'themeColor'), 35%);
-        border-radius: 0.25em;
+@media screen and (max-width: 768px) {
+    
+    .modal-background {
+    
+        .modal {
+            
+            .modal-content {
+                width: 18em;
+        
+                padding: 1em;
+            }
+        }
     }
 }

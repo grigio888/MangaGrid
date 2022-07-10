@@ -18,6 +18,10 @@ footer {
         @include displays.flex(row, center, space-around);
 
         font-size: 0.8em;
+
+        p {
+            cursor: pointer;
+        }
     }
 }
 

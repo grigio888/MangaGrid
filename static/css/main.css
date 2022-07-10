@@ -55,6 +55,26 @@ a {
   -webkit-font-smoothing: antialiased;
 }
 
+.icon-facebook, .icon-linkedin, .icon-github {
+  display: flex;
+  align-items: center;
+}
+.icon-facebook:before, .icon-linkedin:before, .icon-github:before {
+  font-family: "Font Awesome 5 Brands";
+  content: "\f09a";
+  margin-right: 0.5em;
+}
+
+.icon-linkedin:before {
+  font-family: "Font Awesome 5 Brands";
+  content: "\f08c";
+}
+
+.icon-github:before {
+  font-family: "Font Awesome 5 Brands";
+  content: "\f09b";
+}
+
 header {
   position: fixed;
   top: 0;
@@ -254,8 +274,11 @@ footer .container {
   justify-content: space-around;
   font-size: 0.8em;
 }
+footer .container p {
+  cursor: pointer;
+}
 
-.modal {
+.modal-background {
   position: fixed;
   top: 0;
   left: 0;
@@ -264,18 +287,31 @@ footer .container {
   background: rgba(0, 0, 0, 0);
   -webkit-backdrop-filter: blur(10px);
           backdrop-filter: blur(10px);
-  text-align: center;
-  z-index: 9999;
+  z-index: 9900;
 }
-.modal .modal-content {
-  position: absolute;
+.modal-background .modal {
+  position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  text-align: center;
+}
+.modal-background .modal .modal-close {
+  position: absolute;
+  top: 0.75em;
+  right: 0.75em;
+  font-size: 1.5em;
+  cursor: pointer;
+}
+.modal-background .modal .modal-close:before {
+  content: "\f00d";
+  font-weight: 700;
+}
+.modal-background .modal .modal-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   width: 30em;
   height: 20em;
   padding: 2em;
@@ -283,7 +319,16 @@ footer .container {
   border: 2px solid #0278ab;
   border-radius: 0.25em;
 }
+.modal-background .modal .modal-content h2 {
+  margin-bottom: 1em;
+}
 
+@media screen and (max-width: 768px) {
+  .modal-background .modal .modal-content {
+    width: 18em;
+    padding: 1em;
+  }
+}
 section {
   width: 100%;
   margin: 1em auto;

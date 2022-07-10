@@ -65,3 +65,29 @@ a {
         -webkit-font-smoothing: antialiased;
     }
 }
+
+.icon-facebook, .icon-linkedin, .icon-github {
+    display: flex;
+    align-items: center;
+
+    
+    &:before {
+        font-family: "Font Awesome 5 Brands";
+        content: "\f09a";
+        margin-right: 0.5em;
+    }
+}
+
+.icon-linkedin {
+    &:before {
+        font-family: "Font Awesome 5 Brands";
+        content: "\f08c";
+    }
+}
+
+.icon-github {
+    &:before {
+        font-family: "Font Awesome 5 Brands";
+        content: "\f09b";
+    }
+}
