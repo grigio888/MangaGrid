@@ -4,6 +4,7 @@
 
 import datetime
 import json
+import sys
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -27,11 +28,14 @@ from selenium.common.exceptions import *
 class MangaScrapping():
 
     def __init__(self):
-        # self.driver_path = '/usr/bin/chromedriver'
-        self.driver_path = '/usr/bin/geckodriver'
-        # self.driver_path = 'webscrapping/chromedriver.exe'
         self.debbug = False    
 
+    @property
+    def driver_path(self):
+        if sys.platform == 'linux':
+            return '/usr/bin/geckodriver'
+        elif sys.platform == 'win32':
+            return 'webscrapping/chromedriver.exe'
 
 
     # ------------------------------------------------- #
@@ -48,17 +52,20 @@ class MangaScrapping():
 
 
     def browser(self, showing = False):
-        # c = DesiredCapabilities.CHROME
-        c = DesiredCapabilities.FIREFOX
-        c["pageLoadStrategy"] = "none"
-        # options = Options()
-        # if not showing:
-        #     options.add_argument('--headless')
-        # options.add_argument('--no-sandbox')
-        # options.add_argument('--disable-gpu')
-        # self.driver = webdriver.Chrome(service=Service(self.driver_path), desired_capabilities=c, options=options)
-        self.driver = webdriver.Firefox(service=Service(self.driver_path), desired_capabilities=c)
-        # self.driver.minimize_window()
+        if sys.platform == 'linux':
+            c = DesiredCapabilities.FIREFOX
+            c["pageLoadStrategy"] = "none"
+            self.driver = webdriver.Firefox(service=Service(self.driver_path), desired_capabilities=c)
+
+        elif sys.platform == 'win32':
+            c = DesiredCapabilities.CHROME
+            options = Options()
+            if not showing:
+                options.add_argument('--headless')
+            options.add_argument('--no-sandbox')
+            options.add_argument('--disable-gpu')
+            self.driver = webdriver.Chrome(service=Service(self.driver_path), desired_capabilities=c, options=options)
+            self.driver.minimize_window()
 
 
     def get_timestamp_from_string(self, string):
@@ -124,7 +131,7 @@ class MangaScrapping():
 
     def routine_initialization(self):
         self.manganato()
-        self.mangalife()
+        # self.mangalife()
 
     # ------------------ MANGANATO -------------------- #
 
