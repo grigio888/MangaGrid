@@ -27,7 +27,10 @@ from selenium.common.exceptions import *
 class MangaScrapping():
 
     def __init__(self):
-        self.driver_path = 'webscrapping/chromedriver.exe'    
+        # self.driver_path = '/usr/bin/chromedriver'
+        self.driver_path = '/usr/bin/geckodriver'
+        # self.driver_path = 'webscrapping/chromedriver.exe'
+        self.debbug = False    
 
 
 
@@ -45,31 +48,39 @@ class MangaScrapping():
 
 
     def browser(self, showing = False):
-        c = DesiredCapabilities.CHROME
+        # c = DesiredCapabilities.CHROME
+        c = DesiredCapabilities.FIREFOX
         c["pageLoadStrategy"] = "none"
-        options = Options()
-        if not showing:
-            #...
-            options.add_argument('--headless')
-        options.add_argument('--no-sandbox')
-        options.add_argument('--disable-gpu')
-        self.driver = webdriver.Chrome(service=Service(self.driver_path), desired_capabilities=c, options=options)
-        self.driver.minimize_window()
+        # options = Options()
+        # if not showing:
+        #     options.add_argument('--headless')
+        # options.add_argument('--no-sandbox')
+        # options.add_argument('--disable-gpu')
+        # self.driver = webdriver.Chrome(service=Service(self.driver_path), desired_capabilities=c, options=options)
+        self.driver = webdriver.Firefox(service=Service(self.driver_path), desired_capabilities=c)
+        # self.driver.minimize_window()
 
 
     def get_timestamp_from_string(self, string):
+        string = string.split(' ')
+
+        if 'An' in string:
+            string[string.index('An')] = 1
+        elif 'an' in string:
+            string[string.index('an')] = 1
+
         if 'sec' in string:
-            return datetime.datetime.now() - datetime.timedelta(seconds=int(string.split(' ')[0]))
+            return datetime.datetime.now() - datetime.timedelta(seconds=int(string[0]))
         elif 'min' in string:
-            return datetime.datetime.now() - datetime.timedelta(minutes=int(string.split(' ')[0]))
+            return datetime.datetime.now() - datetime.timedelta(minutes=int(string[0]))
         elif 'hour' in string:
-            return datetime.datetime.now() - datetime.timedelta(hours=int(string.split(' ')[0]))
+            return datetime.datetime.now() - datetime.timedelta(hours=int(string[0]))
         elif 'day' in string:
-            return datetime.datetime.now() - datetime.timedelta(days=int(string.split(' ')[0]))
+            return datetime.datetime.now() - datetime.timedelta(days=int(string[0]))
         elif 'month' in string:
-            return datetime.datetime.now() - datetime.timedelta(days=int(string.split(' ')[0]) * 30)
+            return datetime.datetime.now() - datetime.timedelta(days=int(string[0]) * 30)
         elif 'year' in string:
-            return datetime.datetime.now() - datetime.timedelta(days=int(string.split(' ')[0]) * 365)
+            return datetime.datetime.now() - datetime.timedelta(days=int(string[0]) * 365)
         else:
             return datetime.datetime.now()
 
@@ -113,6 +124,7 @@ class MangaScrapping():
 
     def routine_initialization(self):
         self.manganato()
+        self.mangalife()
 
     # ------------------ MANGANATO -------------------- #
 
@@ -121,12 +133,11 @@ class MangaScrapping():
 
 
     def manganato_updates(self):
-        self.browser()
+        self.browser(self.debbug)
         self.driver.get('https://manganato.com/index.php')
 
         updates = {}
 
-        # div = WebDriverWait(self.driver, 20).until(ec.presence_of_element_located((By.CLASS_NAME, 'content-homepage-item')))
         div = self.interacting('content-homepage-item', tag = By.CLASS_NAME)
         div = self.driver.find_elements(By.CLASS_NAME, 'content-homepage-item')
 
@@ -154,6 +165,44 @@ class MangaScrapping():
             }
 
         self.dump_results('manganato_updates', updates)
+
+        self.driver.quit()
+
+
+    # ------------------ MANGALIFE -------------------- #
+
+    def mangalife(self):
+        self.mangalife_updates()
+
+
+    def mangalife_updates(self):
+        self.browser(self.debbug)
+        self.driver.get('https://manga4life.com/')
+
+        updates = {}
+
+        div = self.interacting('Chapter', tag = By.CLASS_NAME)
+        div = self.driver.find_elements(By.CLASS_NAME, 'Chapter')
+
+        for item in div:
+            title = item.find_element(By.CLASS_NAME, 'SeriesName')
+            image = item.find_element(By.CLASS_NAME, 'Image')
+            image = image.find_element(By.TAG_NAME, 'img')
+            chapter = item.find_element(By.CLASS_NAME, 'ChapterLabel')
+            updated = item.find_element(By.CLASS_NAME, 'DateLabel')
+
+            updated = self.get_timestamp_from_string(updated.text)
+
+            updates[title.text] = {
+                'link' : '#',
+                'author' : 'none',
+                'image' : image.get_attribute('src'),
+                'chapter' : chapter.text,
+                'updated' : f'{updated}',
+                'source' : 'mangalife'
+            }
+
+        self.dump_results('mangalife_updates', updates)
 
         self.driver.quit()
 
