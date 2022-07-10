@@ -11,6 +11,7 @@ header {
     padding: 1em;
 
     background-color: white;
+    border-bottom: 1px solid darken(map-get(colors.$colorsTheme, 'themeColor'), 35%);
 
     z-index: 980;
 

@@ -31,37 +31,41 @@ class Modals {
     }
 
     initialBehavior() {
-        this.options = [
-            "headOptionHome",
-            "headOptionManga",
-            "headOptionAbout",
-            "headOptionContact",
-            "footOptionPrivacy",
-            "footOptionTerms",
-        ]
+        this.newOptions = {
+            "headOptionManga": [
+                "Still in development",
+                "Sorry, but you'll have to wait for the next update."
+            ],
+            "headOptionAbout": [
+                "Still in development",
+                "Sorry, but you'll have to wait for the next update."
+            ],
+            "headOptionContact": [
+                "Still in development",
+                "Sorry, but you'll have to wait for the next update."
+            ],
+            "footOptionPrivacy": [
+                "Still in development",
+                "Sorry, but you'll have to wait for the next update."
+            ],
+            "footOptionTerms": [
+                "Still in development",
+                "Sorry, but you'll have to wait for the next update."
+            ],
+            "footOptionAbout": [
+                "Website in development",
+                "By: <br> <a class='icon icon-github' href='https://github.com/grigio888'>Vinicius Grigio</a><a class='icon icon-github' href='https://github.com/phzsantos'>Paulo Henrique</a>"
+            ],
+        }
 
-        this.options.forEach(option => {
-            // opening modal with generic message
-            $(`#${option}`).click(() => {
-                console.log(option);
-                this.enteringModal(`${option}Modal`, "Still in development", "Sorry, but you'll have to wait for the next update.");
+        Object.keys(this.newOptions).forEach(key => {
+            $(`#${key}`).click(() => {
+                this.enteringModal(`${key}Modal`, this.newOptions[key][0], this.newOptions[key][1]);
 
                 // closing modal
                 $(`.modal-close`).click(() => {
                     this.exitingModal(`.modal-background`);
                 });
-            });
-        });
-
-        $('#footOptionAbout').click(() => {
-            this.enteringModal(
-                `footOptionAboutModal`,
-                "Website in development",
-                "By: <br> <a class='icon icon-github' href='https://github.com/grigio888'>Vinicius Grigio</a><a class='icon icon-github' href='https://github.com/phzsantos'>Paulo Henrique</a>");
-
-            // closing modal
-            $(`.modal-close`).click(() => {
-                this.exitingModal(`.modal-background`);
             });
         });
     }

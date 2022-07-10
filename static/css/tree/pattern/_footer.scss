@@ -11,6 +11,7 @@ footer {
     padding: 1em;
 
     background-color: white;
+    border-top: 1px solid darken(map-get(colors.$colorsTheme, 'themeColor'), 35%);
 
     z-index: 995;
 
@@ -25,13 +26,13 @@ footer {
     }
 }
 
-@media screen and (max-width: 768px) {
+// @media screen and (max-width: 768px) {
     
-    footer {
+//     footer {
 
-        .container {
-            // @include displays.flex(column, center, space-around);
-            // font-size: 1em;
-        }
-    }    
-}
+//         .container {
+//             // @include displays.flex(column, center, space-around);
+//             // font-size: 1em;
+//         }
+//     }    
+// }

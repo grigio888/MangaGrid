@@ -67,6 +67,10 @@
                 width: 18em;
         
                 padding: 1em;
+                padding-top: 2em;
+
+                border: 1px solid darken(map-get(colors.$colorsTheme, 'themeColor'), 35%);
+
             }
         }
     }
