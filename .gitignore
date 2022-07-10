@@ -1,5 +1,10 @@
 __pycache__/
 venv/
 *.pyc
+<<<<<<< HEAD
 zplayground.py
 *.json
+=======
+*.json
+zplayground.py
+>>>>>>> main
