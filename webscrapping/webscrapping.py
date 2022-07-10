@@ -6,6 +6,8 @@ import datetime
 import json
 import sys
 
+import concurrent.futures
+
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
@@ -28,7 +30,7 @@ from selenium.common.exceptions import *
 class MangaScrapping():
 
     def __init__(self):
-        self.debbug = False    
+        self.debug = False    
 
     @property
     def driver_path(self):
@@ -130,8 +132,12 @@ class MangaScrapping():
     # ------------------------------------------------- #
 
     def routine_initialization(self):
-        self.manganato()
-        # self.mangalife()
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            task_1 = executor.submit(self.manganato)
+            task_2 = executor.submit(self.mangalife)
+
+            task_1.result()
+            task_2.result()
 
     # ------------------ MANGANATO -------------------- #
 
@@ -140,7 +146,7 @@ class MangaScrapping():
 
 
     def manganato_updates(self):
-        self.browser(self.debbug)
+        self.browser(self.debug)
         self.driver.get('https://manganato.com/index.php')
 
         updates = {}
@@ -183,17 +189,20 @@ class MangaScrapping():
 
 
     def mangalife_updates(self):
-        self.browser(self.debbug)
+        self.browser(self.debug)
         self.driver.get('https://manga4life.com/')
 
         updates = {}
 
-        div = self.interacting('Chapter', tag = By.CLASS_NAME)
-        div = self.driver.find_elements(By.CLASS_NAME, 'Chapter')
+        latest_updates = self.interacting('LatestChapters', tag = By.CLASS_NAME)
+        latest_updates = self.driver.find_element(By.CLASS_NAME, 'LatestChapters')
+
+        div = latest_updates.find_elements(By.CLASS_NAME, 'Chapter')
 
         for item in div:
             title = item.find_element(By.CLASS_NAME, 'SeriesName')
             image = item.find_element(By.CLASS_NAME, 'Image')
+            link = image.find_element(By.TAG_NAME, 'a')
             image = image.find_element(By.TAG_NAME, 'img')
             chapter = item.find_element(By.CLASS_NAME, 'ChapterLabel')
             updated = item.find_element(By.CLASS_NAME, 'DateLabel')
@@ -201,7 +210,7 @@ class MangaScrapping():
             updated = self.get_timestamp_from_string(updated.text)
 
             updates[title.text] = {
-                'link' : '#',
+                'link' : link.get_attribute('href'),
                 'author' : 'none',
                 'image' : image.get_attribute('src'),
                 'chapter' : chapter.text,
