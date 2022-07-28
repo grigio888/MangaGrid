@@ -11,7 +11,7 @@ from tools.tools import c_response, pprint
 from manga.mangascrapping import MangaScrapping as ms
 
 from manga.models import Sources, Mangas, Authors, Genres, Chapters
-from users.models import Users, History, HistoryBehavior
+from users.models import Users, History
 
 
 
@@ -83,12 +83,11 @@ def view(source, search):
             user = Users.query.filter_by(email=session['email']).first()
             mangas = Mangas.query.filter_by(source=source, slug=search).first()
 
-            history = HistoryBehavior(user.id, mangas.id)
-            if history.get():
-                for chapter in history.get_readed():
-                    for ch in manga['chapters']:
-                        if ch['slug'] == chapter.slug:
-                            ch['read'] = True
+            history = History.query.filter_by(user_id=user.id, manga_id=mangas.id).all()
+            for h in history:
+                for ch in manga['chapters']:
+                    if ch['slug'] == h.chapters.slug:
+                        ch['read'] = True
 
         return jsonify(c_response(200, 'Target captured', manga))
 
@@ -122,15 +121,12 @@ def chapter(source, search):
         user = Users.query.filter_by(email=session['email']).first()
         manga = Mangas.query.filter(Mangas.chapters.contains(chapter_obj)).first()
 
-        history = HistoryBehavior(user.id, manga.id)
-
-        if history.get():
-            history.add_ch(chapter_obj)
-        
+        history = History.query.filter_by(user_id=user.id, manga_id=manga.id, chapter_id=chapter_obj.id).first()
+        if history:
+            history.updated_at = datetime.datetime.now()
         else:
-            history.create()
-            history.add_ch(chapter_obj)
-
+            db.session.add(History(user.id, manga.id, chapter_obj.id))
+        
         db.session.commit()
 
         return jsonify(c_response(200, 'Chapter fetched succesfully', task))

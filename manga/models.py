@@ -63,7 +63,7 @@ class Mangas(db.Model):
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.datetime.now)
     favorites = db.relationship('Favorites', backref='mangas', lazy='dynamic')
     ratings = db.relationship('Ratings', backref='mangas', lazy='dynamic')
-    history_new = db.relationship('HistoryNew', backref='mangas', lazy='dynamic')
+    history = db.relationship('History', backref='mangas', lazy='dynamic')
 
     def __init__(self, title, slug, image, status, updated, views, description, source):
         self.title = title
@@ -147,7 +147,7 @@ class Chapters(db.Model):
     chapter_link = db.Column(db.String(300), nullable=False)
     updated = db.Column(db.DateTime, nullable=False, default=datetime.datetime.now)
     manga = db.relationship('Mangas', secondary=mangas_chapters, backref=db.backref('chapters', lazy='dynamic'))
-    history_new = db.relationship('HistoryNew', backref='chapters', lazy='dynamic')
+    history = db.relationship('History', backref='chapters', lazy='dynamic')
 
     def __init__(self, title, slug, chapter_link, updated):
         self.title = title
@@ -156,7 +156,7 @@ class Chapters(db.Model):
         self.updated = updated
 
     def __repr__(self):
-        return f'<Chapter {self.title}>'
+        return f'<Chapter {self.name}>'
 
     def serialize(self):
         return {
