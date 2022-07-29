@@ -60,9 +60,9 @@ class Mangaschan(MangaScrapping):
                 'image' : image,
                 'chapter' : chapter.text.replace('\n', '') if chapter else '',
                 'chapter_link' : f"chapter_viewer?source={self.source}&id={chapter.attrs['href'].split('/')[-2]}",
-                'updated' : f'{self.get_timestamp_from_string(updated.text)}' if updated else '',
+                'updated' : f'{self.get_timestamp_from_string(updated.text, "mangaschan")}' if updated else '',
                 'source' : self.source,
-                'ref' : manga_link.attrs['href'].split('/')[-2]
+                'slug' : manga_link.attrs['href'].split('/')[-2]
             }
 
         self.dump_results(f'{self.source}_updates', updates)
@@ -92,7 +92,7 @@ class Mangaschan(MangaScrapping):
                 'chapter_link' : '',
                 'updated' : '',
                 'source' : self.source,
-                'ref' : manga_link.attrs['href'].split('/')[-2]
+                'slug' : manga_link.attrs['href'].split('/')[-2]
             }
 
         return search
@@ -147,7 +147,7 @@ class Mangaschan(MangaScrapping):
                 'title' : c_title.replace(title, ''),
                 'slug' : c_link.attrs['href'].split('/')[-2],
                 'chapter_link' : f"chapter_viewer?source={self.source}&id={c_link.attrs['href'].split('/')[-2]}",
-                'updated' : c_updt
+                'updated' : self.get_timestamp_from_string(c_updt, 'mangaschan')
             })
             
         return {
@@ -156,7 +156,7 @@ class Mangaschan(MangaScrapping):
             'author' : author,
             'status' : status,
             'genres' : genres,
-            'updated' : updated,
+            'updated' : self.get_timestamp_from_string(updated, 'mangaschan'),
             'views' : views,
             'description' : description.replace('<br>', ' '),
             'chapters' : ch_list,
@@ -225,8 +225,8 @@ class Mangaschan(MangaScrapping):
 
 if __name__ == '__main__':
     manga = Mangaschan()
-    manga.latest_updates()
+    # manga.latest_updates()
     # print(manga.search_title('i became a crow'))
-    # print(manga.access_manga('of-all-things-i-became-a-crow'))
+    print(manga.access_manga('sensei-kongetsu-dou-desu-ka'))
     # manga.get_chapter_content('rouhou-ore-no-iinazuke-ni-natta-jimiko-ie-de-wa-kawaii-shika-nai-capitulo-1')
     # print(manga.get_chapter_content('osabori-jouzuna-koumukai-san-wa-ore-wo-nogasanai-capitulo-2'))

@@ -58,7 +58,7 @@ def indexing_routine():
     targets = []
     for source in results:
         for manga in results[source]:
-            targets.append([results[source][manga]['source'], results[source][manga]['ref']])
+            targets.append([results[source][manga]['source'], results[source][manga]['slug']])
 
     for target in targets:
         manga = sources[target[0]]['object']().access_manga(target[1])

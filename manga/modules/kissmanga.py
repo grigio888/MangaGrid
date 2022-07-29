@@ -55,9 +55,9 @@ class Kissmanga(MangaScrapping):
                 'image' : image.attrs['src'],
                 'chapter' : chapter_link.text.replace('\n', '') if chapter else '',
                 'chapter_link' : f"chapter_viewer?source={self.source}&id={chapter_link.attrs['href'].split('/')[-1]}",
-                'updated' : f'{self.get_timestamp_from_string(chapter_updated.text)}' if chapter_updated else '',
+                'updated' : f'{self.get_timestamp_from_string(chapter_updated.text)}',
                 'source' : self.source,
-                'ref' : link.attrs["href"].split("/")[-1]
+                'slug' : link.attrs["href"].split("/")[-1]
             }
 
         self.dump_results(f'{self.source}_updates', updates)
@@ -92,9 +92,9 @@ class Kissmanga(MangaScrapping):
                 'image' : image.attrs['src'],
                 'chapter' : chapter_link.text,
                 'chapter_link' : f"/chapter_viewer?source={self.source}&id={chapter_link.attrs['href'].split('/')[-1]}",
-                'updated' : f'{self.get_timestamp_from_string(chapter_updated.text)}' if chapter_updated else '',
+                'updated' : f'{self.get_timestamp_from_string(chapter_updated.text)}',
                 'source' : self.source,
-                'ref' : link.attrs['href'].split('/')[-1]
+                'slug' : link.attrs['href'].split('/')[-1]
             }
 
         return search
@@ -104,66 +104,68 @@ class Kissmanga(MangaScrapping):
         r = requests().get(f'http://kissmanga.nl/manga/{ref}').html
         # r.render(sleep=2)
 
-        try:
-            r = r.find('div.col-md-8')[0]
-            
-            manga_dt = r.find('div.manga-detail')[0]
-            image = manga_dt.find('img')[0]
-            title = image.attrs['alt']
-
-            desc_container = manga_dt.find('p.description-update')[0]
-
-            author = ''
-            genres = ''
-            status = ''
-            views = ''
-            for a in desc_container.text.split('\n'):
-                if 'Author' in a:
-                    author = a.replace('Author(s): ', '').split(',')
-
-                elif 'Genre' in a:
-                    genres = a.replace('Genre: ', '').replace(' ', '').split(',')
-
-                elif 'Status' in a:
-                    status = a.replace('Status: ', '')
-
-                elif 'View' in a:
-                    views = a.replace('View: ', '').replace('views', '')
-
-            updated = 'Unknown'
-            description = r.find('div.manga-content')[0].text.replace('\n', '').replace('...', '').replace('Hide content', '')
-
-            chapter_container = r.find('div.mCustomScrollbar')[0].find('li')
-
-            ch_list = []
-            for chapter in chapter_container:
-                c_link = chapter.find('a')[0]
-                c_title = c_link.text
-                c_updt = chapter.find('span')[0].text.replace(':', '')
-
-                ch_list.append({
-                    'title' : c_title.replace(title, ''),
-                    'slug' : c_link.attrs['href'].split('/')[-1],
-                    'chapter_link' : f"chapter_viewer?source={self.source}&id={c_link.attrs['href'].split('/')[-1]}",
-                    'updated' : c_updt
-                })
-                
-            return {
-                'title' : title.replace('\n', ''),
-                'image' : image.attrs['src'],
-                'author' : author,
-                'status' : status,
-                'genres' : genres,
-                'updated' : updated,
-                'views' : views,
-                'description' : description.replace('<br>', ' '),
-                'chapters' : ch_list,
-                'source' : self.source,
-                'slug' : ref
-            }
+        # try:
+        r = r.find('div.col-md-8')[0]
         
-        except:
-            return 'not found'
+        manga_dt = r.find('div.manga-detail')[0]
+        image = manga_dt.find('img')[0]
+        title = image.attrs['alt']
+
+        desc_container = manga_dt.find('p.description-update')[0]
+
+        author = ''
+        genres = ''
+        status = ''
+        views = ''
+        for a in desc_container.text.split('\n'):
+            if 'Author' in a:
+                author = a.replace('Author(s): ', '').split(',')
+
+            elif 'Genre' in a:
+                genres = a.replace('Genre: ', '').replace(' ', '').split(',')
+                if '' in genres:
+                    genres.remove('')
+
+            elif 'Status' in a:
+                status = a.replace('Status: ', '')
+
+            elif 'View' in a:
+                views = a.replace('View: ', '').replace('views', '')
+
+        updated = 'Unknown'
+        description = r.find('div.manga-content')[0].text.replace('\n', '').replace('...', '').replace('Hide content', '')
+
+        chapter_container = r.find('div.mCustomScrollbar')[0].find('li')
+
+        ch_list = []
+        for chapter in chapter_container:
+            c_link = chapter.find('a')[0]
+            c_title = c_link.text
+            c_updt = chapter.find('span')[0].text.replace(':', '')
+
+            ch_list.append({
+                'title' : c_title.replace(title, ''),
+                'slug' : c_link.attrs['href'].split('/')[-1],
+                'chapter_link' : f"chapter_viewer?source={self.source}&id={c_link.attrs['href'].split('/')[-1]}",
+                'updated' : self.get_date_from_string('2010-01-01 00:00:00')
+            })
+            
+        return {
+            'title' : title.replace('\n', ''),
+            'image' : image.attrs['src'],
+            'author' : author,
+            'status' : status if status else 'Unknown',
+            'genres' : genres,
+            'updated' : self.get_timestamp_from_string(updated),
+            'views' : views,
+            'description' : description.replace('<br>', ' '),
+            'chapters' : ch_list,
+            'source' : self.source,
+            'slug' : ref
+        }
+        
+        # except:
+        #     return 'not found'
 
     def get_chapter_content(self, ref):
         r = requests().get(f'https://manganatos.com/{ref}').html
@@ -213,6 +215,6 @@ class Kissmanga(MangaScrapping):
 if __name__ == '__main__':
     manga = Kissmanga()
     # manga.latest_updates()
-    print(manga.search_title('i became a crow'))
-    # print(manga.access_manga('of-all-things-i-became-a-crow?38004'))
+    # print(manga.search_title('i became a crow'))
+    print(manga.access_manga('martial-peak'))
     # print(manga.get_chapter_content('bijin-onna-joushi-takizawa-san-chapter-133'))
