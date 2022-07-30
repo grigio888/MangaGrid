@@ -10,7 +10,7 @@ from tools.sources import sources
 from tools.tools import c_response, pprint
 from manga.mangascrapping import MangaScrapping as ms
 
-from manga.models import Sources, Mangas, Authors, Genres, Chapters
+from manga.models import Sources, Mangas, Chapters
 from users.models import Users, History
 
 
@@ -75,19 +75,22 @@ def view(source, search):
 
         ms().idx_manga(manga)
 
-        # for ch in manga['chapters']:
-        #     ch['updated'] = ms().get_date_from_string(ch['updated'])
-        #     ch['updated'] = ms().get_string_from_timestamp(ch['updated'])
-
         if 'email' in session:
-            user = Users.query.filter_by(email=session['email']).first()
-            mangas = Mangas.query.filter_by(source=source, slug=search).first()
+            user = Users.query.filter_by(email=session['email']).first().id
+            source = Sources.query.filter_by(slug=source).first().id
+            mangas = Mangas.query.filter_by(slug=search, source=source).first().id
 
-            history = History.query.filter_by(user_id=user.id, manga_id=mangas.id).all()
-            for h in history:
-                for ch in manga['chapters']:
-                    if ch['slug'] == h.chapters.slug:
-                        ch['read'] = True
+            history = History.query.filter_by(user_id=user, manga_id=mangas).first()
+            if not history:
+                history = History(user_id=user, manga_id=mangas)
+                db.session.add(history)
+                db.session.commit()
+            else:
+                print(history.chapters.all())
+                for chapter in history.chapters.all():
+                    for ch in manga['chapters']:
+                        if ch['slug'] == chapter.slug:
+                            ch['read'] = True
 
         return jsonify(c_response(200, 'Target captured', manga))
 
@@ -121,11 +124,12 @@ def chapter(source, search):
         user = Users.query.filter_by(email=session['email']).first()
         manga = Mangas.query.filter(Mangas.chapters.contains(chapter_obj)).first()
 
-        history = History.query.filter_by(user_id=user.id, manga_id=manga.id, chapter_id=chapter_obj.id).first()
-        if history:
-            history.updated_at = datetime.datetime.now()
+        history = History.query.filter_by(user_id=user.id, manga_id=manga.id).first()
+        if chapter_obj in history.chapters.all():
+            history.chapters.remove(chapter_obj)
+            history.chapters.append(chapter_obj)
         else:
-            db.session.add(History(user.id, manga.id, chapter_obj.id))
+            history.chapters.append(chapter_obj)
         
         db.session.commit()
 

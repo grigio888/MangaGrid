@@ -8,7 +8,9 @@ import datetime
 import requests
 
 from extensions import db
+from tools.tools import BehaviorStructure
 
+from manga.models import Sources, Mangas, Authors, Genres, Chapters
 
 # -------------------- MODELS --------------------- #
 
@@ -26,6 +28,11 @@ class Users(db.Model):
     main_page = db.Column(db.String(255), default='/latest_updates')
     theme = db.Column(db.String(255), default='light')
 
+    # -- relationships -- #
+    favorites = db.relationship('Favorites', backref='user', lazy='dynamic')
+    history = db.relationship('History', backref='user', lazy='dynamic')
+    ratings = db.relationship('Ratings', backref='user', lazy='dynamic')
+
     def __init__(self, email, password):
         self.email = email
         self.password = password
@@ -42,6 +49,9 @@ class Users(db.Model):
     def __repr__(self):
         return '<User %r>' % self.username
 
+    def __name__(self):
+        return 'User'
+
     def serialize(self):
         return {
             'user_id': self.id,
@@ -54,6 +64,29 @@ class Users(db.Model):
             'user_theme': self.theme
         }
 
+class UserBehavior(BehaviorStructure):
+    def __init__(self, email, password=None):
+        self.email = email
+        self.password = password
+
+        self.every_field = [self.email, self.password]
+        self.object = Users
+        self.primary_identifier = [self.object.email==self.email]
+
+    def update(self):
+        if self.check_all_fields() and self.read() is not None:
+            user = self.read()
+            user.email = self.email
+            user.password = self.password
+            db.session.commit()
+            return user
+
+        elif not self.check_all_fields():
+            raise Exception(f'Missing fields in order to update a {self.object.__name__}')
+
+        else:
+            raise Exception(f'{self.object.__name__} does not exist')
+
 
 
 
@@ -62,7 +95,6 @@ history_fk_chapter = db.Table('history_fk_chapter',
     db.Column('history_id', db.Integer, db.ForeignKey('history.id')),
     db.Column('chapter_id', db.Integer, db.ForeignKey('chapters.id'))
 )
-
 
 class History(db.Model):
     __tablename__ = 'history'
@@ -73,17 +105,15 @@ class History(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.datetime.now())
     updated_at = db.Column(db.DateTime, default=datetime.datetime.now(), onupdate=datetime.datetime.now())
 
-    # -- relationships -- #
-    # user = db.relationship('Users', backref=db.backref('history', lazy='dynamic'))
-    # manga = db.relationship('Mangas', backref=db.backref('history', lazy='dynamic'))
-    # chapters = db.relationship('Chapters', secondary=history_fk_chapter, backref='history', lazy='dynamic')
-
     def __init__(self, user_id, manga_id):
         self.user_id = user_id
         self.manga_id = manga_id
 
     def __repr__(self):
         return '<History %r>' % self.id
+
+    def __name__(self):
+        return 'History'
 
     def serialize(self):
         return {
@@ -93,6 +123,109 @@ class History(db.Model):
             'history_created_at': self.created_at,
             'history_updated_at': self.updated_at
         }
+
+class HistoryBehavior(BehaviorStructure):
+    def __init__(self, user_id, manga_id):
+        self.user_id = user_id
+        self.manga_id = manga_id
+
+        self.every_field = [self.user_id, self.manga_id]
+        self.object = History
+        self.primary_identifier = [self.object.user_id==self.user_id, self.object.manga_id==self.manga_id]
+
+    def update(self):
+        if self.check_all_fields() and self.read() is not None:
+            history = self.read()
+            history.user_id = self.user_id
+            history.manga_id = self.manga_id
+            db.session.commit()
+            return history
+
+        elif not self.check_all_fields():
+            raise Exception(f'Missing fields in order to update a {self.object.__name__}')
+
+        else:
+            raise Exception(f'{self.object.__name__} does not exist')
+        
+    def delete(self):
+        if self.check_all_fields() and self.read() is not None:
+            history = self.read()
+            history.chapters = []
+            db.session.commit()
+            return history
+        super().delete()
+
+    # -- Generic Behavior -- #
+    def get_readed_chapters(self):
+        if self.check_all_fields() and self.read() is not None:
+            return self.read().chapters
+        else:
+            raise Exception(f'{self.object.__name__} does not exist')
+            
+    def add_readed_chapter(self, chapter_slug):
+        chapter = Chapters.query.filter_by(slug=chapter_slug).first()
+
+        if self.check_all_fields() and chapter is not None and self.read() is not None:
+            history = self.read()
+            history.chapters.append(chapter)
+            db.session.commit()
+            return history
+
+        elif not self.check_all_fields():
+            raise Exception(f'Missing fields in order to update a {self.object.__name__}')
+
+        elif chapter is None:
+            raise Exception(f'Chapter {chapter_slug} does not exist')
+
+        else:
+            raise Exception(f'{self.object.__name__} does not exist')
+
+    def remove_readed_chapter(self, chapter_slug):
+        chapter = Chapters.query.filter_by(slug=chapter_slug).first()
+
+        if self.check_all_fields() and chapter is not None and self.read() is not None:
+            history = self.read()
+            history.chapters.remove(chapter)
+            db.session.commit()
+            return history
+
+        elif not self.check_all_fields():
+            raise Exception(f'Missing fields in order to update a {self.object.__name__}')
+
+        elif chapter is None:
+            raise Exception(f'Chapter {chapter_slug} does not exist')
+
+        else:
+            raise Exception(f'{self.object.__name__} does not exist')
+
+    def add_all_chapters(self):
+        if self.check_all_fields() and self.read() is not None:
+            history = self.read()
+            history.chapters = []
+            for chapter in Mangas.query.filter_by(id=self.manga_id).first().chapters:
+                history.chapters.append(chapter)
+            db.session.commit()
+            return history
+
+        elif not self.check_all_fields():
+            raise Exception(f'Missing fields in order to update a {self.object.__name__}')
+
+        else:
+            raise Exception(f'{self.object.__name__} does not exist')
+
+    def remove_all_chapters(self):
+        if self.check_all_fields() and self.read() is not None:
+            history = self.read()
+            history.chapters = []
+            db.session.commit()
+            return history
+
+        elif not self.check_all_fields():
+            raise Exception(f'Missing fields in order to update a {self.object.__name__}')
+
+        else:
+            raise Exception(f'{self.object.__name__} does not exist')
+
 
 
 
@@ -106,16 +239,15 @@ class Favorites(db.Model):
     manga_id = db.Column(db.Integer, db.ForeignKey('mangas.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.datetime.now())
 
-    # -- relationships -- #
-    # user = db.relationship('Users', backref=db.backref('favorites', lazy='dynamic'))
-    # manga = db.relationship('Mangas', backref=db.backref('favorites', lazy='dynamic'))
-
     def __init__(self, user_id, manga_id):
         self.user_id = user_id
         self.manga_id = manga_id
 
     def __repr__(self):
         return '<Favorite %r>' % self.id
+
+    def __name__(self):
+        return 'Favorite'
 
     def serialize(self):
         return {
@@ -124,6 +256,8 @@ class Favorites(db.Model):
             'favorites_manga_id': self.manga_id,
             'favorites_updated_at': self.updated_at
         }
+
+
 
 
 
@@ -140,10 +274,6 @@ class Ratings(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.datetime.now())
     updated_at = db.Column(db.DateTime, default=datetime.datetime.now(), onupdate=datetime.datetime.now())
 
-    # -- relationships -- #
-    # user = db.relationship('Users', backref=db.backref('ratings', lazy='dynamic'))
-    # manga = db.relationship('Mangas', backref=db.backref('ratings', lazy='dynamic'))
-
     def __init__(self, user_id, manga_id, rating):
         self.user_id = user_id
         self.manga_id = manga_id
@@ -151,6 +281,9 @@ class Ratings(db.Model):
 
     def __repr__(self):
         return '<Rating %r>' % self.id
+
+    def __name__(self):
+        return 'Rating'
 
     def serialize(self):
         return {
@@ -164,5 +297,8 @@ class Ratings(db.Model):
 
 
 
+
+
 if __name__ == '__main__':
-    print(Users.query.first().serialize())
+    user = UserBehavior('admin@admin.com')
+    print(user.read())

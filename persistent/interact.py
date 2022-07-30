@@ -45,7 +45,7 @@ if __name__ == '__main__':
     db = Database()
 
     # db.sql_cmd('UPDATE users set theme = "dark" where id = 1')
-    db.sql_cmd('SELECT theme FROM users')
+    db.sql_cmd('SELECT * FROM history')
 
     # db.read_table_names()
     # db.sql_cmd('DROP TABLE alembic_version')

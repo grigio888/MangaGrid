@@ -7,60 +7,7 @@ sys.path.append(os.getcwd())
 import datetime
 
 from extensions import db
-
-
-# -------------- BEHAVIOR STRUCTURE --------------- #
-
-class BehaviorStructure():
-    # every behavior must have a self.object = Object and
-    # self.every_field = [self.with, self.every, self.field]
-
-    # -- General Behavior -- #
-    def create(self):
-        if self.check_all_fields() and self.read() is None:
-            object_created = self.object(*self.every_field)
-            db.session.add(object_created)
-            db.session.commit()
-            return object_created
-
-        elif not self.check_all_fields():
-            raise Exception(f'Missing field in order to create a object {self.object.__name__}')
-
-        else:
-            raise Exception(f'{self.object.__name__} already exists')
-
-    def read(self):
-        return self.object.query.filter_by(slug=self.slug).first()
-
-    def update(self):
-        ...
-        # must be implemented in the child class
-
-    def delete(self):
-        object_query = self.object.query.filter_by(slug=self.slug).first()
-
-        if object_query is not None:
-            db.session.delete(object_query)
-            db.session.commit()
-            return object_query
-
-        else:
-            raise Exception(f'{self.object.__name__} does not exist')
-
-
-    # -- Checks -- #
-    def check_all_fields(self):
-        if self.every_field is None:
-            return False
-
-        for field in self.every_field:
-            if field is None:
-                return False
-        
-        return True
-
-
-
+from tools.tools import BehaviorStructure
 
 
 # -------------------- MODELS --------------------- #
@@ -109,6 +56,7 @@ class SourcesBehavior(BehaviorStructure):
 
         self.every_field = [self.slug, self.title, self.language, self.url]
         self.object = Sources
+        self.primary_identifier = [self.object.slug==self.slug]
 
     # -- General Behavior -- #
     def update(self):
@@ -157,6 +105,7 @@ class StatusBehavior(BehaviorStructure):
 
         self.every_field = [self.slug,]
         self.object = Status
+        self.primary_identifier = [self.object.slug==self.slug]
 
     # -- General Behavior -- #
     def update(self):
@@ -205,6 +154,7 @@ class AuthorsBehavior(BehaviorStructure):
 
         self.every_field = [self.slug]
         self.object = Authors
+        self.primary_identifier = [self.object.slug==self.slug]
 
     # -- General Behavior -- #
     def update(self):
@@ -253,6 +203,7 @@ class GenresBehavior(BehaviorStructure):
 
         self.every_field = [self.slug]
         self.object = Genres
+        self.primary_identifier = [self.object.slug==self.slug]
 
     # -- General Behavior -- #
     def update(self):
@@ -302,6 +253,10 @@ class Mangas(db.Model):
     author = db.relationship('Authors', secondary=mangas_fk_author, backref='mangas')
     genre = db.relationship('Genres', secondary=mangas_fk_genre, backref='mangas')
 
+    favorites = db.relationship('Favorites', backref='mangas', lazy='dynamic')
+    history = db.relationship('History', backref='mangas', lazy='dynamic')
+    ratings = db.relationship('Ratings', backref='mangas', lazy='dynamic')
+
     def __init__(self, slug, title, image, status, views, description, source):
         self.slug = slug
         self.title = title
@@ -344,6 +299,8 @@ class MangaBehavior(BehaviorStructure):
 
         self.every_field = [self.slug, self.title, self.image, self.status, self.views, self.description, self.source]
         self.object = Mangas
+        self.primary_identifier = [self.object.slug==self.slug]
+        if self.source: self.primary_identifier.append(self.object.source==self.source)
 
     # -- General Behavior -- #
     def update(self):
@@ -489,6 +446,7 @@ class Chapters(db.Model):
 
     # -- Relations -- #
     manga = db.relationship('Mangas', backref=db.backref('chapters', lazy='dynamic'))
+    history = db.relationship('History', secondary='history_fk_chapter', backref=db.backref('chapters', lazy='dynamic'))
 
     def __init__(self, slug, title, link, manga_id, updated_on_source):
         self.slug = slug
@@ -525,6 +483,7 @@ class ChapterBehavior(BehaviorStructure):
 
         self.every_field = [self.slug, self.title, self.link, self.manga_id, self.updated_on_source]
         self.object = Chapters
+        self.primary_identifier = [self.object.slug==self.slug]
 
     # -- General Behavior -- #
     def update(self):

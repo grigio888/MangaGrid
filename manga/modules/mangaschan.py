@@ -1,23 +1,21 @@
-# ------------------------------------------------- #
-# ---------------- DEFAULT IMPORTS ---------------- #
-# ------------------------------------------------- #
+# -------------------- SELF RUN ------------------- #
 # make the script return to the main directory
 import os, sys
 
 sys.path.append(os.getcwd())
 
-import datetime
+
+# ---------------- DEFAULT IMPORTS ---------------- #
 
 from manga.mangascrapping import MangaScrapping
 
 from requests_html import HTMLSession as requests
-from tools.tools import clear, pprint
+from tools.tools import pprint
 
-from manga.models import Chapters, Mangas, Authors, Genres
+from manga.models import Chapters, Mangas
 
-# ------------------------------------------------- #
 # ------------------- STRUCTURE ------------------- #
-# ------------------------------------------------- #
+
 
 class Mangaschan(MangaScrapping):
     def __init__(self):
@@ -30,7 +28,7 @@ class Mangaschan(MangaScrapping):
 
     def latest_updates(self):
         r = requests().get('https://mangaschan.com/').html
-        # r.render(sleep=1)
+        # r.render(sleep=3)
 
         updates = {}
 
@@ -41,7 +39,7 @@ class Mangaschan(MangaScrapping):
         for item in div:
             manga_link = item.find('a')[0]
             title = manga_link.attrs['title']
-            image = manga_link.find('img')[0].attrs['src'].split('?resize')[0]
+            image = manga_link.find('img')[0].attrs['data-lazy-src']
 
             try:
                 ext = item.find('div.bigor')[0]
@@ -82,7 +80,7 @@ class Mangaschan(MangaScrapping):
         for item in div:
             manga_link = item.find('a')[0]
             title = manga_link.attrs['title']
-            image = manga_link.find('img')[0].attrs['src'].split('?resize')[0]
+            image = manga_link.find('img')[0].attrs['src']
             
             search[title.replace('\n', '')] = {
                 'link' : f'/manga_viewer?source={self.source}&id={manga_link.attrs["href"].split("/")[-2]}',
@@ -111,7 +109,7 @@ class Mangaschan(MangaScrapping):
         panel = panel.find('div.postbody')[0]
         panel = panel.find('div.seriestucon')[0]
 
-        image = panel.find('img.wp-post-image')[0].attrs['src']
+        image = panel.find('img.wp-post-image')[0].attrs['data-lazy-src']
 
         title = panel.find('div.seriestuheader')[0].find('h1.entry-title')[0].text
 
@@ -205,7 +203,7 @@ class Mangaschan(MangaScrapping):
             next_link = f"chapter_viewer?source={self.source}&id={next_ref}"
 
         try:
-            manga = Mangas.query.filter(Mangas.source==self.source, Mangas.chapters.any(Chapters.slug==ref)).first()
+            manga = Mangas.query.join(Chapters).filter(Chapters.slug==ref).first()
             manga_title = manga.title
             manga_page = f"manga_viewer?source={self.source}&id={manga.slug}"
         except Exception as e:
@@ -225,8 +223,8 @@ class Mangaschan(MangaScrapping):
 
 if __name__ == '__main__':
     manga = Mangaschan()
-    # manga.latest_updates()
+    manga.latest_updates()
     # print(manga.search_title('i became a crow'))
-    print(manga.access_manga('sensei-kongetsu-dou-desu-ka'))
+    # print(manga.access_manga('sensei-kongetsu-dou-desu-ka'))
     # manga.get_chapter_content('rouhou-ore-no-iinazuke-ni-natta-jimiko-ie-de-wa-kawaii-shika-nai-capitulo-1')
     # print(manga.get_chapter_content('osabori-jouzuna-koumukai-san-wa-ore-wo-nogasanai-capitulo-2'))

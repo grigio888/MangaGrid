@@ -21,7 +21,7 @@ from extensions import db
 from tools.tools import clear, pprint
 
 from manga.models import MangaBehavior, SourcesBehavior, StatusBehavior, AuthorsBehavior,\
-                         GenresBehavior, ChapterBehavior
+                         GenresBehavior, ChapterBehavior, Mangas
 from users.models import Users, History
 
 # ------------------------------------------------- #
@@ -220,9 +220,7 @@ class MangaScrapping():
         return f'/chapter_viewer?source={self.source}&id={string}'
 
     # -------------------- INDEXING BEHAVIORS -------------------- #
-    def idx_manga(self, manga: dict):
-        print(manga['status'])
-        
+    def idx_manga(self, manga: dict):        
         status = StatusBehavior(manga['status']).read()
         if not status:
             status = StatusBehavior(manga['status']).create()

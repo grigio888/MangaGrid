@@ -64,8 +64,8 @@ class Header {
         let preferences = await tools.asyncFetch('GET','/api/users/session/get_profile');
 
         if (preferences.status == 200) {
-            $('#profileName').text(preferences.data.username);
-            $('.icon-logo').attr('href', preferences.data.main_page);
+            $('#profileName').text(preferences.data.user_username);
+            $('.icon-logo').attr('href', preferences.data.user_main_page);
         }
     }
 }
@@ -366,7 +366,7 @@ class MangaViewer {
 
     async continueReadingBehavior() {
         let checkingContinue = await tools.asyncFetch('GET',`/api/users/session/history/latest/${this.url_args.id}`);
-        
+        console.log(checkingContinue);
         if (checkingContinue.status == 200) {
             $('#continueReading').attr('href', checkingContinue.data.chapter_link);
         } else {
@@ -830,9 +830,9 @@ class Profile {
     async getProfile () {
         let profile = await tools.asyncFetch('GET', '/api/users/session/get_profile');
         if (profile.status == 200) {
-            $('#mainSection').val(profile.data.main_page);
-            $('#usernameName').text(profile.data.username);
-            $('#usrnm').val(profile.data.username);
+            $('#mainSection').val(profile.data.user_main_page);
+            $('#usernameName').text(profile.data.user_username);
+            $('#usrnm').val(profile.data.user_username);
         }
     }
 
@@ -894,7 +894,7 @@ class Profile {
         $('.li-target').remove();
         resp.data.forEach(item => {
             let card = cardHistory.clone();
-            card.find('img').attr('src', item.image);
+            card.find('img').attr('src', item.manga_image);
             card.find('.card-manga-page').text(item.manga_title);
             card.find('.card-manga-page').attr('href', `/manga_viewer?source=${item.manga_source}&id=${item.manga_slug}`);
             if (item.chapter_title != null) {
