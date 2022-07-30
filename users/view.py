@@ -7,11 +7,10 @@ from flask import Blueprint, jsonify, session, request
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from extensions import db
-from templates.view import history
 from tools.tools import c_response, pprint
 
-from manga.models import Sources, Mangas, Authors, Genres, Chapters
-from users.models import HistoryBehavior, Ratings, Users, History, Favorites
+from manga.models import Sources, Mangas, Chapters
+from users.models import Ratings, Users, History, Favorites
 
 
 
@@ -246,11 +245,13 @@ def session_history():
             source = Sources.query.filter_by(id = manga.source).first()
             history = History.query.filter_by(user_id=user.id, manga_id=manga.id).first()
             
-            output = manga.serialize() | {'updated_at': history.updated_at}
-            output = output | history.chapters.all()[-1].serialize() | {'manga_source': source.slug}
-            data.append(output)            
+            if len(history.chapters.all()) > 0:
+                output = manga.serialize() | history.serialize() | {'manga_source': source.slug}
+                output = output | history.chapters.order_by(Chapters.id.desc()).first().serialize() if history.chapters.count() > 0 else output
+                print(output)
+                data.append(output)            
 
-        data = sorted(data, key=lambda k: k['updated_at'], reverse=True)
+        data = sorted(data, key=lambda k: k['history_updated_at'], reverse=True)
 
         pprint(f'[i] Info: {request.path} - User {user.username} requested history.', 'green')
         return jsonify(c_response(200, 'History sent', data))
@@ -274,7 +275,8 @@ def session_history_manga(param, manga_slug):
             
             data = {}
             if history and len(history.chapters.all()) > 0:
-                data = history.serialize() | history.chapters.all()[-1].serialize() | manga.serialize()
+                data = history.serialize() | manga.serialize()
+                data = data | history.chapters.order_by(Chapters.id.desc()).first().serialize() if history.chapters.count() > 0 else {}
 
                 return jsonify(c_response(200, 'History sent', data))
 
@@ -331,21 +333,21 @@ def session_favorites(filter = 'manga_title'):
                 history = user.history.filter_by(manga_id = fav.manga_id).first()
 
 
-                output = manga.serialize()
-                if history:
-                    output.update(history.serialize())
-                if len(history.chapters.all()) > 0:
-                    output.update(history.chapters.all()[-1].serialize())
-                output.update(fav.serialize())
-                output.update({'manga_source': source.slug})
+                output = manga.serialize() | fav.serialize()
+                output = output | history.serialize() if history else {}
+                output = output | history.chapters.order_by(Chapters.id.desc()).first().serialize() if history.chapters.count() > 0 else output
+                output = output | {'manga_source': source.slug}
 
                 # if history and history.chapters:
-                #     if manga.chapters.all()[-1].id > history.chapters.all()[-1].id:
-                #         output['chapter_new'] = True
+                #     if manga.chapters.order_by(Chapters.id.desc()).first().id > history.chapters.all()[-1].id:
+                #         output['chapters_new'] = True
 
                 data.append(output)
 
-            data = sorted(data, key=lambda k: k[filter])
+            if filter == 'favorites_created_at':
+                data = sorted(data, key=lambda k: k[filter], reverse=True)
+            else:
+                data = sorted(data, key=lambda k: k[filter])
 
             pprint(f'[i] Info: {request.path} - Favorites of {user.username}', 'green')
             return jsonify(c_response(200, 'Favorites sent', data))

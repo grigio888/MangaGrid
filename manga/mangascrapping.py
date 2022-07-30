@@ -244,6 +244,8 @@ class MangaScrapping():
             pprint(f'[i] Info: Manga {manga_obj.title} indexed.', 'green')
 
         else:
+            manga_obj.image = manga['image']
+            db.session.commit()
             pprint(f'[i] Info: Manga {manga_obj.title} already indexed.', 'yellow')
 
         for author in manga['author']:
@@ -270,6 +272,7 @@ class MangaScrapping():
             except:
                 pprint(f'[i] Info: Genre {genre_obj.slug} already added to {manga_obj.title}.', 'yellow')
 
+        
         for chapter in manga['chapters'][::-1]:
             chapter_obj = ChapterBehavior(chapter['slug']).read()
             if not chapter_obj:

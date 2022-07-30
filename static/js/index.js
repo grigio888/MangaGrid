@@ -948,7 +948,7 @@ class Favorites {
 
     async getFavorites (filter = 'manga_title') {
         let resp = await tools.asyncFetch('GET', `/api/users/session/favorite/filter/${filter}`);
-        console.log(resp);
+
         if (resp.status == 200) {
             $('#containerTarget').empty();
             resp.data.forEach(item => {

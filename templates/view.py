@@ -89,7 +89,6 @@ def profile():
 @render.route('/profile/favorite')
 @render.route('/favorite')
 def favorite():
-    session['email'] = 'admin@admin.com'
     if 'email' not in session:
         return redirect('/login')
         

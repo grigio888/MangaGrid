@@ -10,7 +10,7 @@ import requests
 from extensions import db
 from tools.tools import BehaviorStructure
 
-from manga.models import Sources, Mangas, Authors, Genres, Chapters
+from manga.models import Mangas, Chapters
 
 # -------------------- MODELS --------------------- #
 

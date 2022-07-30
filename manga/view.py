@@ -133,7 +133,7 @@ def chapter(source, search):
             history.chapters.append(chapter_obj)
         else:
             history.chapters.append(chapter_obj)
-        
+        history.updated_at = datetime.datetime.now()
         db.session.commit()
 
         return jsonify(c_response(200, 'Chapter fetched succesfully', task))
