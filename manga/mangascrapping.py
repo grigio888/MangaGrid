@@ -6,7 +6,6 @@ import datetime
 import json
 import os
 import sys
-from turtle import update
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -20,8 +19,7 @@ from selenium.common.exceptions import *
 from extensions import db
 from tools.tools import clear, pprint
 
-from manga.models import MangaBehavior, SourcesBehavior, StatusBehavior, AuthorsBehavior,\
-                         GenresBehavior, ChapterBehavior, Mangas
+from manga.models import Sources, Mangas, Authors, Genres, Chapters
 from users.models import Users, History
 
 # ------------------------------------------------- #
@@ -95,18 +93,11 @@ class MangaScrapping():
             self.driver.minimize_window()
 
 
-    def get_timestamp_from_string(self, string, where = 'all'):
+    def get_timestamp_from_string(self, string):
         output = {}
 
-        if where == 'mangaschan':
-            string = string.replace(',', '').split(' ')
-        else:
-            string = string.replace(',', '').split(' ')
-            if 'an' in string:
-                string[string.index('an')] = '1'
-            elif 'An' in string:
-                string[string.index('An')] = '1'
-
+        string = string.replace('An', '1').replace('an', '1').split(' ')
+        
         for time in self.string_ts.keys():
             for param in self.string_ts[time]:
                 if param in string:
@@ -124,18 +115,13 @@ class MangaScrapping():
                         output['year'] = int(datetime.datetime.now().year)
                         output['hour'] = int(string[-1].split(':')[0])
                         output['minute'] = int(string[-1].split(':')[1])
-                
                     return datetime.datetime(**output)
 
-        # raise Exception('Timestamp not found')
-        return datetime.datetime(year=2010, month=1, day=1)
+        return datetime.datetime.now()
 
 
     def get_date_from_string(self, string):
-        try:
-            return datetime.datetime.strptime(string, '%Y-%m-%d %H:%M:%S.%f')
-        except:
-            return datetime.datetime.strptime(string, '%Y-%m-%d %H:%M:%S')
+        return datetime.datetime.strptime(string, '%Y-%m-%d %H:%M:%S.%f')
 
 
     def get_string_from_timestamp(self, timestamp):
@@ -156,10 +142,8 @@ class MangaScrapping():
             return f'{int(delta.days / 7)} weeks ago'
         elif delta.days < 365:
             return f'{int(delta.days / 30)} months ago'
-        elif delta.days < 365 * 10:
-            return f'{int(delta.days / 365)} year ago'
         else:
-            return 'Unknown'
+            return f'{int(delta.days / 365)} year ago'
 
 
 
@@ -222,73 +206,96 @@ class MangaScrapping():
         return f'/chapter_viewer?source={self.source}&id={string}'
 
     # -------------------- INDEXING BEHAVIORS -------------------- #
-    def idx_manga(self, manga: dict):        
-        status = StatusBehavior(manga['status']).read()
-        if not status:
-            status = StatusBehavior(manga['status']).create()
-            pprint(f'[i] Info: Status {status.slug} created.', 'green')
+    def idx_manga(self, manga: dict):
+        idx = Mangas.query.filter_by(slug=manga['slug']).first()
 
-        manga_obj = MangaBehavior(manga['slug']).read()
-
-        if not manga_obj:
-            manga_obj = MangaBehavior(
-                slug = manga['slug'],
+        if not idx:
+            idx = Mangas(
                 title = manga['title'],
+                slug = manga['slug'],
                 image = manga['image'],
-                status = status.id,
+                status = manga['status'],
+                updated = self.get_timestamp_from_string(manga['updated']),
                 views = manga['views'],
                 description = manga['description'],
-                source = SourcesBehavior(manga['source']).read().id,
-            ).create()
-            pprint(f'[i] Info: Manga status {manga_obj.title} is {status.slug}.', 'green')
-            pprint(f'[i] Info: Manga {manga_obj.title} indexed.', 'green')
+                source = manga['source'],
+            )
+            db.session.add(idx)
+            pprint(f'[i] Info: Manga {idx.title} indexed.', 'green')
 
         else:
-            manga_obj.image = manga['image']
-            db.session.commit()
-            pprint(f'[i] Info: Manga {manga_obj.title} already indexed.', 'yellow')
+            pprint(f'[i] Info: Manga {idx.title} already indexed.', 'green')
 
-        for author in manga['author']:
-            author_obj = AuthorsBehavior(author).read()
-            if not author_obj:
-                author_obj = AuthorsBehavior(author).create()
-                pprint(f'[i] Info: Author {author_obj.slug} created.', 'green')
+        for genre in self.idx_genre(manga['genres']):
+            if genre not in idx.genre:
+                idx.genre.append(genre)
+                pprint(f'[i] Info: Genre {genre.genre} added to {idx.title}.', 'green')
 
-            try:
-                MangaBehavior(manga_obj.slug).add_author(author_obj)
-                pprint(f'[i] Info: Author {author_obj.slug} added to {manga_obj.title}.', 'green')
-            except:
-                pprint(f'[i] Info: Author {author_obj.slug} already added to {manga_obj.title}.', 'yellow')
+        for author in self.idx_author(manga['author']):
+            if author not in idx.author:
+                idx.author.append(author)
+                pprint(f'[i] Info: Author {author.author} added to {idx.title}.', 'green')
 
-        for genre in manga['genres']:
-            genre_obj = GenresBehavior(genre).read()
-            if not genre_obj:
-                genre_obj = GenresBehavior(genre).create()
-                pprint(f'[i] Info: Genre {genre_obj.slug} created.', 'green')
+        for chapter in self.idx_chapter(manga['chapters']):
+            if chapter not in idx.chapters:
+                idx.chapters.append(chapter)
+                pprint(f'[i] Info: Chapter {chapter.title} added to {idx.title}.', 'green')
+            else: break
 
-            try:
-                MangaBehavior(manga_obj.slug).add_genre(genre_obj)
-                pprint(f'[i] Info: Genre {genre_obj.slug} added to {manga_obj.title}.', 'green')
-            except:
-                pprint(f'[i] Info: Genre {genre_obj.slug} already added to {manga_obj.title}.', 'yellow')
+        db.session.commit()
 
+        return idx
+
+
+    def idx_genre(self, genres: list):
+        output = []
+
+        for genre in genres:
+            verif = Genres.query.filter_by(genre=genre).first()
+            if not verif:
+                genre_obj = Genres(genre)
+                db.session.add(genre_obj)
+                db.session.commit()
+                output.append(genre_obj)
+                pprint(f'[i] Info: Genre {genre} indexed.', 'green')
+
+        return output
+
+    def idx_author(self, authors: list):
+        output = []
         
-        for chapter in manga['chapters'][::-1]:
-            chapter_obj = ChapterBehavior(chapter['slug']).read()
-            if not chapter_obj:
-                chapter_obj = ChapterBehavior(
-                    slug = chapter['slug'],
-                    title = chapter['title'],
-                    link = chapter['chapter_link'],
-                    manga_id = manga_obj.id,
-                    updated_on_source= chapter['updated'],
-                ).create()
-                pprint(f'[i] Info: Chapter {chapter_obj.title} of {manga_obj.title} created.', 'green')
+        for author in authors:
+            idx = Authors.query.filter_by(author=author).first()
+            if not idx:
+                idx = Authors(author)
+                db.session.add(idx)
+                pprint(f'[i] Info: Author {idx.author} indexed.', 'green')
+            output.append(idx)
 
-            else:
-                pprint(f'[i] Info: Chapter {chapter_obj.title} of {manga_obj.title} already indexed.', 'yellow')
-                
-        return manga_obj
+        db.session.commit()
+
+        return output
+
+    def idx_chapter(self, chapters: list):
+        output = []
+
+        for chapter in chapters:
+            idx = Chapters.query.filter_by(slug=chapter['slug']).first()
+            if not idx:
+                idx = Chapters(
+                    title = chapter['title'],
+                    slug = chapter['slug'],
+                    chapter_link = chapter['chapter_link'],
+                    updated = MangaScrapping().get_timestamp_from_string(chapter['updated']) if chapter['updated'] in chapter else datetime.datetime.now(),
+                )
+                db.session.add(idx)
+                pprint(f'[i] Info: Chapter {chapter["title"]} indexed.', 'green')
+            else: break
+            output.append(idx)
+
+        db.session.commit()
+
+        return output
 
 if __name__ == '__main__':
     pass

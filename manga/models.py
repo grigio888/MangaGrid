@@ -7,229 +7,40 @@ sys.path.append(os.getcwd())
 import datetime
 
 from extensions import db
-from tools.tools import BehaviorStructure
-
 
 # -------------------- MODELS --------------------- #
+
+
 
 # ------- SOURCES -------- #
 class Sources(db.Model):
     __tablename__ = 'sources'
 
     id = db.Column(db.Integer, primary_key=True)
-    slug = db.Column(db.String(100), nullable=False)
-    title = db.Column(db.String(100), unique=True, nullable=False)
+    source = db.Column(db.String(100), unique=True, nullable=False)
+    source_slug = db.Column(db.String(100), nullable=False)
     language = db.Column(db.String(100), nullable=False)
     url = db.Column(db.String(100), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.datetime.now())
-    updated_at = db.Column(db.DateTime, default=datetime.datetime.now(), onupdate=datetime.datetime.now())
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
-    def __init__(self, slug, title, language, url):
-        self.slug = slug
-        self.title = title
+    def __init__(self, source, source_slug, language, url):
+        self.source = source
+        self.source_slug = source_slug
         self.language = language
         self.url = url
 
     def __repr__(self):
-        return f'<Source {self.slug}>'
-
-    def __name__(self):
-        return 'Sources'
-
-    def serialize(self):
-        return {
-            'source_id': self.id,
-            'source_slug': self.slug,
-            'source_title': self.title,
-            'source_language': self.language,
-            'source_url': self.url,
-            'source_created_at': self.created_at,
-            'source_updated_at': self.updated_at
-        }
-
-class SourcesBehavior(BehaviorStructure):
-    def __init__(self, slug, title=None, language=None, url=None):
-        self.slug = slug
-        self.title = title
-        self.language = language
-        self.url = url
-
-        self.every_field = [self.slug, self.title, self.language, self.url]
-        self.object = Sources
-        self.primary_identifier = [self.object.slug==self.slug]
-
-    # -- General Behavior -- #
-    def update(self):
-        if self.check_all_fields() and self.read() is not None:
-            source = self.read()
-            source.title = self.title
-            source.language = self.language
-            source.url = self.url
-            db.session.commit()
-            return source
-
-        elif not self.check_all_fields():
-            raise Exception('Missing field in order to update a source')
-
-        else:
-            raise Exception('Source does not exist')
-
-
-
-# -------- STATUS -------- #
-class Status(db.Model):
-    __tablename__ = 'status'
-
-    id = db.Column(db.Integer, primary_key=True)
-    slug = db.Column(db.String(100), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.datetime.now())
-    updated_at = db.Column(db.DateTime, default=datetime.datetime.now(), onupdate=datetime.datetime.now())
-
-    def __init__(self, slug):
-        self.slug = slug
-
-    def __repr__(self):
-        return f'<Status {self.slug}>'
-
-    def __name__(self):
-        return 'Status'
-
-    def serialize(self):
-        return {
-            'status_status' : self.slug
-        }
-
-class StatusBehavior(BehaviorStructure):
-    def __init__(self, slug):
-        self.slug = slug
-
-        self.every_field = [self.slug,]
-        self.object = Status
-        self.primary_identifier = [self.object.slug==self.slug]
-
-    # -- General Behavior -- #
-    def update(self):
-        if self.check_all_fields() and self.read() is not None:
-            status = self.read()
-            status.slug = self.slug
-            db.session.commit()
-            return status
-
-        elif not self.check_all_fields():
-            raise Exception('Missing field in order to update a status')
-
-        else:
-            raise Exception('Status does not exist')
-
-
-
-
-
-# ------- AUTHORS -------- #
-class Authors(db.Model):
-    __tablename__ = 'authors'
-
-    id = db.Column(db.Integer, primary_key=True)
-    slug = db.Column(db.String(100), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.datetime.now())
-    updated_at = db.Column(db.DateTime, default=datetime.datetime.now(), onupdate=datetime.datetime.now())
-
-    def __init__(self, slug):
-        self.slug = slug
-
-    def __repr__(self):
-        return f'<Author {self.slug}>'
-
-    def __name__(self):
-        return 'Authors'
-
-    def serialize(self):
-        return {
-            'authors_author' : self.slug
-        }
-
-class AuthorsBehavior(BehaviorStructure):
-    def __init__(self, slug):
-        self.slug = slug
-
-        self.every_field = [self.slug]
-        self.object = Authors
-        self.primary_identifier = [self.object.slug==self.slug]
-
-    # -- General Behavior -- #
-    def update(self):
-        if self.check_all_fields() and self.read() is not None:
-            author = self.read()
-            author.slug = self.slug
-            db.session.commit()
-            return author
-
-        elif not self.check_all_fields():
-            raise Exception('Missing field in order to update an author')
-
-        else:
-            raise Exception('Author does not exist')
-
-
-
-
-
-# ------- GENRES -------- #s
-class Genres(db.Model):
-    __tablename__ = 'genres'
-
-    id = db.Column(db.Integer, primary_key=True)
-    slug = db.Column(db.String(100), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.datetime.now())
-    updated_at = db.Column(db.DateTime, default=datetime.datetime.now(), onupdate=datetime.datetime.now())
-
-    def __init__(self, slug):
-        self.slug = slug
-
-    def __repr__(self):
-        return f'<Genre {self.slug}>'
-
-    def __name__(self):
-        return 'Genres'
-
-    def serialize(self):
-        return {
-            'genres_genre' : self.slug
-        }
-
-class GenresBehavior(BehaviorStructure):
-    def __init__(self, slug):
-        self.slug = slug
-
-        self.every_field = [self.slug]
-        self.object = Genres
-        self.primary_identifier = [self.object.slug==self.slug]
-
-    # -- General Behavior -- #
-    def update(self):
-        if self.check_all_fields() and self.read() is not None:
-            genre = self.read()
-            genre.slug = self.slug
-            db.session.commit()
-            return genre
-
-        elif not self.check_all_fields():
-            raise Exception('Missing field in order to update a genre')
-
-        else:
-            raise Exception('Genre does not exist')
-
-
+        return f'<Source {self.name}>'
 
 
 
 # ------- MANGAS -------- #
-mangas_fk_author = db.Table('mangas_fk_author',
+mangas_authors = db.Table('mangas_authors',
     db.Column('manga_id', db.Integer, db.ForeignKey('mangas.id'), primary_key=True),
     db.Column('author_id', db.Integer, db.ForeignKey('authors.id'), primary_key=True)
 )
 
-mangas_fk_genre = db.Table('mangas_fk_genre',
+mangas_genres = db.Table('mangas_genres',
     db.Column('manga_id', db.Integer, db.ForeignKey('mangas.id')),
     db.Column('genre_id', db.Integer, db.ForeignKey('genres.id'))
 )
@@ -238,30 +49,28 @@ class Mangas(db.Model):
     __tablename__ = 'mangas'
 
     id = db.Column(db.Integer, primary_key=True)
-    slug = db.Column(db.String(1000), nullable=False)
     title = db.Column(db.String(100), nullable=False)
+    slug = db.Column(db.String(1000), nullable=False)
     image = db.Column(db.String(400), nullable=False)
-    status = db.Column(db.Integer, db.ForeignKey('status.id'), nullable=False)
-    updated = db.Column(db.DateTime, default=datetime.datetime.now(), onupdate=datetime.datetime.now())
+    author = db.relationship('Authors', secondary=mangas_authors, backref='mangas')
+    status = db.Column(db.String(100), default=True)
+    genre = db.relationship('Genres', secondary=mangas_genres, backref='mangas')
+    updated = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     views = db.Column(db.Integer, default=0)
-    description = db.Column(db.String(4000), nullable=False)
+    description = db.Column(db.String(2000), nullable=False)
     source = db.Column(db.Integer, db.ForeignKey('sources.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.datetime.now())
-    updated_at = db.Column(db.DateTime, default=datetime.datetime.now(), onupdate=datetime.datetime.now())
-
-    # -- relationships -- #
-    author = db.relationship('Authors', secondary=mangas_fk_author, backref='mangas')
-    genre = db.relationship('Genres', secondary=mangas_fk_genre, backref='mangas')
-
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.datetime.now)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.datetime.now)
     favorites = db.relationship('Favorites', backref='mangas', lazy='dynamic')
-    history = db.relationship('History', backref='mangas', lazy='dynamic')
     ratings = db.relationship('Ratings', backref='mangas', lazy='dynamic')
+    history = db.relationship('History', backref='mangas', lazy='dynamic')
 
-    def __init__(self, slug, title, image, status, views, description, source):
-        self.slug = slug
+    def __init__(self, title, slug, image, status, updated, views, description, source):
         self.title = title
+        self.slug = slug
         self.image = image
         self.status = status
+        self.updated = updated
         self.views = views
         self.description = description
         self.source = source
@@ -269,243 +78,94 @@ class Mangas(db.Model):
     def __repr__(self):
         return f'<Manga {self.title}>'
 
-    def __name__(self):
-        return 'Mangas'
-
     def serialize(self):
         return {
-            'manga_id': self.id,
-            'manga_slug': self.slug,
-            'manga_title': self.title,
-            'manga_image': self.image,
-            'manga_status': self.status,
-            'manga_views': self.views,
-            'manga_description': self.description,
-            'manga_source': self.source,
-            'manga_created_at': self.created_at,
-            'manga_updated_at': self.updated_at
+            'title' : self.title,
+            'slug' : self.slug,
+            'image' : self.image,
+            'status' : self.status,
+            'updated' : self.updated,
+            'views' : self.views,
+            'description' : self.description,
+            'source' : self.source
         }
 
 
-class MangaBehavior(BehaviorStructure):
-    def __init__(self, slug, title=None, image=None, status=None, views=None, description=None, source=None):
-        self.slug = slug
-        self.title = title
-        self.image = image
-        self.status = status
-        self.views = views
-        self.description = description
-        self.source = source
 
-        self.every_field = [self.slug, self.title, self.image, self.status, self.views, self.description, self.source]
-        self.object = Mangas
-        self.primary_identifier = [self.object.slug==self.slug]
-        if self.source: self.primary_identifier.append(self.object.source==self.source)
+# ------- AUTHORS -------- #
+class Authors(db.Model):
+    __tablename__ = 'authors'
 
-    # -- General Behavior -- #
-    def update(self):
-        if self.check_all_fields() and self.read() is not None:
-            manga = self.read()
-            manga.title = self.title
-            manga.image = self.image
-            manga.status = self.status
-            manga.views = self.views
-            manga.description = self.description
-            manga.source = self.source
-            db.session.commit()
-            return manga
+    id = db.Column(db.Integer, primary_key=True)
+    author = db.Column(db.String(100), nullable=False)
 
-        elif not self.check_all_fields():
-            raise Exception('Missing fields in order to update a manga')
+    def __init__(self, author):
+        self.author = author
 
-        else:
-            raise Exception('Manga does not exist')
+    def __repr__(self):
+        return f'<Author {self.author}>'
 
-    # -- Relations Behavior -- #
-    # -- Authors -- #
-    def add_author(self, author):
-        manga = self.read()
+    def serialize(self):
+        return {
+            'author' : self.author
+        }
 
-        if manga is not None and author not in manga.author and type(author) is Authors:
-            manga.author.append(author)
-            db.session.commit()
-            return manga
 
-        elif manga is None:
-            raise Exception('Manga does not exist')
 
-        elif author in manga.author:
-            raise Exception('Author already registered in manga')
+# ------- GENRES -------- #s
+class Genres(db.Model):
+    __tablename__ = 'genres'
 
-        else:
-            raise Exception('Invalid object for author')
+    id = db.Column(db.Integer, primary_key=True)
+    genre = db.Column(db.String(100), nullable=False)
 
-    def remove_author(self, author):
-        manga = self.read()
+    def __init__(self, genre):
+        self.genre = genre
 
-        if manga is not None and author in manga.author and type(author) is Authors:
-            manga.author.remove(author)
-            db.session.commit()
-            return manga
+    def __repr__(self):
+        return f'<Genre {self.genre}>'
 
-        elif manga is None:
-            raise Exception('Manga does not exist')
-
-        elif author not in manga.author:
-            raise Exception('Author not registered in manga')
-
-        else:
-            raise Exception('Invalid object for author')
-
-    def remove_all_authors(self):
-        manga = self.read()
-
-        if manga is not None:
-            manga.author = []
-            db.session.commit()
-            return manga
-
-        else:
-            raise Exception('Manga does not exist')
-
-    # -- Genres -- #
-    def add_genre(self, genre):
-        manga = self.read()
-
-        if manga is not None and genre not in manga.genre and type(genre) is Genres:
-            manga.genre.append(genre)
-            db.session.commit()
-            return manga
-
-        elif manga is None:
-            raise Exception('Manga does not exist')
-
-        elif genre in manga.genre:
-            raise Exception('Genre already registered in manga')
-
-        else:
-            raise Exception('Invalid object for genre')
-
-    def remove_genre(self, genre):
-        manga = self.read()
-
-        if manga is not None and genre in manga.genre and type(genre) is Genres:
-            manga.genre.remove(genre)
-            db.session.commit()
-            return manga
-
-        elif manga is None:
-            raise Exception('Manga does not exist')
-
-        elif genre not in manga.genre:
-            raise Exception('Genre not registered in manga')
-
-        else:
-            raise Exception('Invalid object for genre')
-
-    def remove_all_genres(self):
-        manga = self.read()
-
-        if manga is not None:
-            manga.genre = []
-            db.session.commit()
-            return manga
-
-        else:
-            raise Exception('Manga does not exist')
-
-    # -- Status -- #
-    def update_status(self, status):
-        manga = self.read()
-
-        if manga is not None and type(status) is Status:
-            manga.status = status.id
-            db.session.commit()
-            return manga
-
-        elif manga is None:
-            raise Exception('Manga does not exist')
-
-        else:
-            raise Exception('Invalid object for status')
+    def serialize(self):
+        return {
+            'genre' : self.genre
+        }
 
 
 
 # ------- CHAPTERS -------- #
+mangas_chapters = db.Table('mangas_chapters',
+    db.Column('manga_id', db.Integer, db.ForeignKey('mangas.id'), primary_key=True),
+    db.Column('chapter_id', db.Integer, db.ForeignKey('chapters.id'), primary_key=True)
+)
+
 class Chapters(db.Model):
     __tablename__ = 'chapters'
 
     id = db.Column(db.Integer, primary_key=True)
-    slug = db.Column(db.String(100), nullable=False)
     title = db.Column(db.String(100), nullable=False)
-    link = db.Column(db.String(300), nullable=False)
-    manga_id = db.Column(db.Integer, db.ForeignKey('mangas.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.datetime.now())
-    updated_at = db.Column(db.DateTime, default=datetime.datetime.now(), onupdate=datetime.datetime.now())
-    updated_on_source = db.Column(db.DateTime)
+    slug = db.Column(db.String(100), nullable=False)
+    chapter_link = db.Column(db.String(300), nullable=False)
+    updated = db.Column(db.DateTime, nullable=False, default=datetime.datetime.now)
+    manga = db.relationship('Mangas', secondary=mangas_chapters, backref=db.backref('chapters', lazy='dynamic'))
+    history = db.relationship('History', backref='chapters', lazy='dynamic')
 
-    # -- Relations -- #
-    manga = db.relationship('Mangas', backref=db.backref('chapters', lazy='dynamic'))
-    history = db.relationship('History', secondary='history_fk_chapter', backref=db.backref('chapters', lazy='dynamic'))
-
-    def __init__(self, slug, title, link, manga_id, updated_on_source):
-        self.slug = slug
+    def __init__(self, title, slug, chapter_link, updated):
         self.title = title
-        self.link = link
-        self.manga_id = manga_id
-        self.updated_on_source = updated_on_source
+        self.slug = slug
+        self.chapter_link = chapter_link
+        self.updated = updated
 
     def __repr__(self):
-        return f'<Chapter {self.title}>'
-
-    def __name__(self):
-        return f'Chapter'
+        return f'<Chapter {self.name}>'
 
     def serialize(self):
         return {
-            'chapter_id': self.id,
-            'chapter_slug': self.slug,
-            'chapter_title': self.title,
-            'chapter_link': self.link,
-            'chapter_manga_id': self.manga_id,
-            'chapter_created_at': self.created_at,
-            'chapter_updated_at': self.updated_at,
-            'chapter_updated_on_source': self.updated_on_source
+            'id': self.id,
+            'title': self.title,
+            'slug': self.slug,
+            'chapter_link': self.chapter_link,
+            'updated': self.updated
         }
 
-class ChapterBehavior(BehaviorStructure):
-    def __init__(self, slug, title=None, link=None, manga_id=None, updated_on_source=None):
-        self.slug = slug
-        self.title = title
-        self.link = link
-        self.manga_id = manga_id
-        self.updated_on_source = updated_on_source
-
-        self.every_field = [self.slug, self.title, self.link, self.manga_id, self.updated_on_source]
-        self.object = Chapters
-        self.primary_identifier = [self.object.slug==self.slug]
-
-    # -- General Behavior -- #
-    def update(self):
-        if self.check_all_fields() and self.read() is not None:
-            chapter = self.read()
-            chapter.title = self.title
-            chapter.link = self.link
-            chapter.manga_id = self.manga_id
-            chapter.updated_on_source = self.updated_on_source
-            db.session.commit()
-            return chapter
-
-        elif not self.check_all_fields():
-            raise Exception('Missing fields in order to update a chapter')
-
-        else:
-            raise Exception('Chapter does not exist')
-
-
-
-
-
 if __name__ == '__main__':
-    manga = Mangas.query.filter(Mangas.slug=='boku-no-hero-academia').first()
-    print(manga.serialize())
+    print(Mangas.query.filter_by(title='Martial Peak').first().chapters.all())
