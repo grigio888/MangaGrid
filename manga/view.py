@@ -75,6 +75,9 @@ def view(source, search):
 
         ms().idx_manga(manga)
 
+        for chapter in manga['chapters']:
+            chapter['updated'] = ms().get_string_from_timestamp(chapter['updated'])
+
         if 'email' in session:
             user = Users.query.filter_by(email=session['email']).first().id
             source = Sources.query.filter_by(slug=source).first().id
@@ -91,7 +94,7 @@ def view(source, search):
                     for ch in manga['chapters']:
                         if ch['slug'] == chapter.slug:
                             ch['read'] = True
-
+            
         return jsonify(c_response(200, 'Target captured', manga))
 
     except KeyError as e:

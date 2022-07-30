@@ -254,7 +254,7 @@ class Favorites(db.Model):
             'favorites_id': self.id,
             'favorites_user_id': self.user_id,
             'favorites_manga_id': self.manga_id,
-            'favorites_updated_at': self.updated_at
+            'favorites_created_at': self.created_at
         }
 
 

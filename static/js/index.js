@@ -366,7 +366,7 @@ class MangaViewer {
 
     async continueReadingBehavior() {
         let checkingContinue = await tools.asyncFetch('GET',`/api/users/session/history/latest/${this.url_args.id}`);
-        console.log(checkingContinue);
+        
         if (checkingContinue.status == 200) {
             $('#continueReading').attr('href', checkingContinue.data.chapter_link);
         } else {
@@ -447,7 +447,6 @@ class ChapterViewer {
     }
 
     renderChapter(chapter) {
-        console.log(chapter)
         $('#mangaTitle').text(chapter.title);
         if (chapter.manga_title != '' || !chapter.manga_title) {
             $('#mangaPage').text(chapter.manga_title);
@@ -754,7 +753,6 @@ class Login {
     }
 
     async register () {
-        // console.log({email: this.email, password: this.password})
         let resp = await tools.asyncFetch(
             'POST',
             '/api/users/login',
@@ -950,12 +948,12 @@ class Favorites {
 
     async getFavorites (filter = 'manga_title') {
         let resp = await tools.asyncFetch('GET', `/api/users/session/favorite/filter/${filter}`);
-
+        console.log(resp);
         if (resp.status == 200) {
             $('#containerTarget').empty();
             resp.data.forEach(item => {
                 let cardClone = this.card.clone();
-                cardClone.find('#cardImage').attr('src', item.image);
+                cardClone.find('#cardImage').attr('src', item.manga_image);
                 cardClone.find('#cardTitle').text(item.manga_title);
                 cardClone.find('#cardLink').attr('href', `/manga_viewer?source=${item.manga_source}&id=${item.manga_slug}`);
                 // cardClone.find('#cardChapter').text(item.chapter_new ? '' : "There's unread chapters");

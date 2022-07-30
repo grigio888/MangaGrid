@@ -127,7 +127,7 @@ def session_is_alive():
         return jsonify(c_response(200, 'Logged in', {'username': user.username, 'theme': user.theme}))
 
     else:
-        session['theme'] = session.get('theme', 'light')
+        session['theme'] = session.get('theme', 'dark')
         session['cookies_acpted'] = session.get('cookies_acpted', False)
         return jsonify(c_response(401, 'Not logged in', {'theme': session['theme'], 'cookies_acpted': session['cookies_acpted']}))
 
@@ -327,17 +327,21 @@ def session_favorites(filter = 'manga_title'):
             data = []
             for fav in user.favorites:
                 manga = Mangas.query.filter_by(id = fav.manga_id).first()
+                source = Sources.query.filter_by(id = manga.source).first()
                 history = user.history.filter_by(manga_id = fav.manga_id).first()
 
 
                 output = manga.serialize()
-                output.update(history.serialize())
-                output.update(history.chapters.all()[-1].serialize())
+                if history:
+                    output.update(history.serialize())
+                if len(history.chapters.all()) > 0:
+                    output.update(history.chapters.all()[-1].serialize())
                 output.update(fav.serialize())
+                output.update({'manga_source': source.slug})
 
-                if history and history.chapters:
-                    if manga.chapters.all()[-1].id > history.chapters.all()[-1].id:
-                        output['chapter_new'] = True
+                # if history and history.chapters:
+                #     if manga.chapters.all()[-1].id > history.chapters.all()[-1].id:
+                #         output['chapter_new'] = True
 
                 data.append(output)
 

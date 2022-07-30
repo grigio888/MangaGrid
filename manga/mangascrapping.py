@@ -156,8 +156,10 @@ class MangaScrapping():
             return f'{int(delta.days / 7)} weeks ago'
         elif delta.days < 365:
             return f'{int(delta.days / 30)} months ago'
-        else:
+        elif delta.days < 365 * 10:
             return f'{int(delta.days / 365)} year ago'
+        else:
+            return 'Unknown'
 
 
 
@@ -268,7 +270,7 @@ class MangaScrapping():
             except:
                 pprint(f'[i] Info: Genre {genre_obj.slug} already added to {manga_obj.title}.', 'yellow')
 
-        for chapter in manga['chapters'][-1:0:-1]:
+        for chapter in manga['chapters'][::-1]:
             chapter_obj = ChapterBehavior(chapter['slug']).read()
             if not chapter_obj:
                 chapter_obj = ChapterBehavior(
