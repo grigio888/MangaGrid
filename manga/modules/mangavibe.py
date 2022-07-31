@@ -106,7 +106,7 @@ class Mangavibe(MangaScrapping):
                 'image' : image,
                 'chapter' : '',
                 'chapter_link' : '',
-                'updated' : f'{self.get_timestamp_from_string(updated, "mangaschan")}',
+                'updated' : self.get_timestamp_from_string(updated, "mangaschan"),
                 'source' : self.source,
                 'slug' : f'{manga_link.attrs["href"].split("/")[2]}___{manga_link.attrs["href"].split("/")[3]}'
             }

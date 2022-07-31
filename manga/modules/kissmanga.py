@@ -92,7 +92,7 @@ class Kissmanga(MangaScrapping):
                 'image' : image.attrs['src'],
                 'chapter' : chapter_link.text,
                 'chapter_link' : f"/chapter_viewer?source={self.source}&id={chapter_link.attrs['href'].split('/')[-1]}",
-                'updated' : f'{self.get_timestamp_from_string(chapter_updated.text)}',
+                'updated' : self.get_timestamp_from_string(chapter_updated.text),
                 'source' : self.source,
                 'slug' : link.attrs['href'].split('/')[-1]
             }

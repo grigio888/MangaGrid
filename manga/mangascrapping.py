@@ -121,10 +121,10 @@ class MangaScrapping():
                     try:
                         output['year'] = int(string[string.index(param) + 2])
                     except:
-                        output['year'] = int(datetime.datetime.now().year)
+                        output['year'] = int(datetime.datetime.now().year) if output['month'] < int(datetime.datetime.now().month) else int(datetime.datetime.now().year) - 1
                         output['hour'] = int(string[-1].split(':')[0])
                         output['minute'] = int(string[-1].split(':')[1])
-                
+
                     return datetime.datetime(**output)
 
         # raise Exception('Timestamp not found')

@@ -43,8 +43,9 @@ def avaliable_sources():
 @manga.route('/search/<string:source>/<string:search>')
 def search(source, search):
     try:
-        obj = sources[source]['object']
-        task = process_generator(obj().search_title, search)
+        task = process_generator(sources[source]['object']().search_title, search)
+        for manga in task:
+            task[manga]['updated'] = ms().get_string_from_timestamp(task[manga]['updated'])
 
         if task:
             return jsonify(c_response(200, 'Search results', task))

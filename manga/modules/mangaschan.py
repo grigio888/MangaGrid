@@ -89,7 +89,7 @@ class Mangaschan(MangaScrapping):
                 'image' : image,
                 'chapter' : '',
                 'chapter_link' : '',
-                'updated' : f'{self.get_timestamp_from_string(updated, self.source)}',
+                'updated' : self.get_timestamp_from_string(updated, self.source),
                 'source' : self.source,
                 'slug' : manga_link.attrs['href'].split('/')[-2]
             }
